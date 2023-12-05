@@ -10,16 +10,7 @@ def full_scan(url):
     page_numbers = extract_page_number(url)
     links = prepare_links(url, page_numbers)
 
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-    channel = connection.channel()
-
-    channel.queue_declare(queue='process_single_offer')
-
-    for link in links:
-        encoded_link = link.encode('utf-8')
-        channel.basic_publish(exchange='',
-                              routing_key='process_single_offer',
-                              body=encoded_link)
+    send_message_to_kafka_queue('process_single_offer', links)
 
 
 def individual_offer_scan(url):
@@ -47,6 +38,12 @@ def individual_offer_scan(url):
             update_dates(new_offer, existing_offer)
             create_price_history(new_offer)
             session.add(new_offer)
+            add_download_photos_to_queue(url_params, new_offer.offer_id)
+
+def add_download_photos_to_queue(params, offer_id):
+    images = [data for data in params if data[0] == 'image_list'][0][1]
+    concat_images_with_id = [f'{offer_id},{img}'for img in images]
+    send_message_to_kafka_queue('process_image', concat_images_with_id)
 
 
 def update_dates(new_offer, existing_offer):
@@ -66,3 +63,15 @@ def update_prices(new_offer, existing_offer):
 def create_price_history(offer):
     price_history = PriceHistory(price=offer.price, date=offer.last_visited)
     offer.price_history.append(price_history)
+
+def send_message_to_kafka_queue(queue_name, elements):
+    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    channel = connection.channel()
+
+    channel.queue_declare(queue=queue_name)
+
+    for element in elements:
+        encoded_element = element.encode('utf-8')
+        channel.basic_publish(exchange='',
+                              routing_key=queue_name,
+                              body=encoded_element)
