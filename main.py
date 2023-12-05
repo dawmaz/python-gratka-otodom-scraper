@@ -78,7 +78,7 @@ def main4():
     print()
 
 def main5():
-    individual_offer_scan("https://gratka.pl/nieruchomosci/mieszkanie-wroclaw-stare-miasto/ob/32607069")
+    individual_offer_scan("https://gratka.pl/nieruchomosci/mieszkanie-wroclaw-swojczyce-ul-magellana/ob/28965805")
 
 def main6():
     photos_download('32607069,4,https://d-gr.cdngr.pl/kadry/k/r/gr-ogl/fd/65/32607069_871346193_mieszkanie-wroclaw-stare-miasto_xlarge.jpg')

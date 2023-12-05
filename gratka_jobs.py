@@ -11,18 +11,28 @@ from datetime import datetime, timedelta
 def full_scan(url):
     page_numbers = extract_page_number(url)
     links = prepare_links(url, page_numbers)
-
     send_message_to_kafka_queue('process_single_offer', links)
+
+
+def add_job_to_queue(job):
+    send_message_to_kafka_queue('process_job', [job])
+    pass
 
 
 def individual_offer_scan(url):
     with create_session() as session:
-        existing_offer = session.query(Offer).filter_by(website_address=url).first()
+        existing_offer = session.query(Offer).filter_by(offer_id=url.split('/')[-1]).first()
         url_params = extract_parameters(url)
+        is_removed = url_params[0] == 'Removed'
 
         # Do not process again if the site was visited in last 24h
         if existing_offer:
             current_time = datetime.now()
+            if is_removed:
+                existing_offer.date_removed = current_time
+                session.merge(existing_offer)
+                return
+
             time_difference = current_time - existing_offer.last_visited
             if time_difference >= timedelta(minutes=1):
                 new_offer = offer_parse_parameters(url_params)
@@ -34,14 +44,15 @@ def individual_offer_scan(url):
                     create_price_history(existing_offer)
                 session.merge(existing_offer)
         else:
-            new_offer = offer_parse_parameters(url_params)
-            new_offer.website_address = url
-            new_offer.offer_id = url.split('/')[-1]
-            update_dates(new_offer, existing_offer)
-            create_price_history(new_offer)
-            session.add(new_offer)
-            session.commit()
-            add_download_photos_to_queue(url_params, new_offer.offer_id, new_offer.id)
+            if not is_removed:
+                new_offer = offer_parse_parameters(url_params)
+                new_offer.website_address = url
+                new_offer.offer_id = url.split('/')[-1]
+                update_dates(new_offer, existing_offer)
+                create_price_history(new_offer)
+                session.add(new_offer)
+                session.commit()
+                add_download_photos_to_queue(url_params, new_offer.offer_id, new_offer.id)
 
 
 def photos_download(offerid_link):

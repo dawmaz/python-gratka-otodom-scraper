@@ -59,6 +59,20 @@ def extract_parameters(url):
     # Parse the HTML content
     soup = BeautifulSoup(html, 'html.parser')
 
+    parameter_list = []
+
+    # Check if the offer still exist
+    li_elements = soup.select('div.flashMessages.row li.flashMessages__info')
+
+    # Check if any <li> element contains the desired text
+    desired_text = 'To ogłoszenie nie jest już dostępne'
+    for li_element in li_elements:
+        if desired_text in li_element.get_text():
+             parameter_list.append('Removed')
+             return parameter_list
+
+
+
     # Find the div with class "parameters__container"
     parameters_div = soup.find('div', class_='parameters__container')
 
@@ -66,7 +80,7 @@ def extract_parameters(url):
     li_elements = parameters_div.find_all('li')
 
     # Extract information from each li element
-    parameter_list = []
+
     for li in li_elements:
         # Find the span and b elements within the li
         span = li.find('span')
