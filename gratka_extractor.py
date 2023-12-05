@@ -140,8 +140,9 @@ def extract_images_from_script(html_parsed):
 
 def prepare_links(url, number):
     links = []
+    separator = '&' if '?' in url else '?'
     logger.info(f'Preparing links for {url} has started')
     for i in range(1, number + 1):
-        links.append(f'{url}?page={i}')
+        links.append(f'{url}{separator}page={i}')
     logger.info(f'Preparing links for {url} has finished')
     return links

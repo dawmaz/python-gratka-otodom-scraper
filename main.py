@@ -1,6 +1,6 @@
 from gratka_extractor import extract_links_from_url, extract_parameters
 from offer_parser import offer_parse_parameters
-from gratka_jobs import individual_offer_scan, photos_download
+from gratka_jobs import individual_offer_scan, photos_download, refresh_all
 import pika
 
 
@@ -83,6 +83,8 @@ def main5():
 def main6():
     photos_download('32607069,4,https://d-gr.cdngr.pl/kadry/k/r/gr-ogl/fd/65/32607069_871346193_mieszkanie-wroclaw-stare-miasto_xlarge.jpg')
 
+def main7():
+    refresh_all();
 
 if __name__ == '__main__':
-    main5()
+    main7()

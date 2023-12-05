@@ -4,19 +4,23 @@ import os
 
 from gratka_extractor import extract_page_number, prepare_links, extract_parameters
 from offer_parser import offer_parse_parameters
-from db_schema import create_session, Offer, JobHistory, PriceHistory, Photo
+from db_schema import create_session, Offer, PriceHistory, Photo
 from datetime import datetime, timedelta
 
 
 def full_scan(url):
     page_numbers = extract_page_number(url)
     links = prepare_links(url, page_numbers)
-    send_message_to_kafka_queue('process_single_offer', links)
+    send_message_to_queue('process_single_offer', links)
+    return links.count()
 
 
-def add_job_to_queue(job):
-    send_message_to_kafka_queue('process_job', [job])
-    pass
+def refresh_all():
+    one_day_ago = datetime.now() - timedelta(days=1)
+    with create_session() as session:
+        offers = session.query(Offer).filter(Offer.date_removed.is_(None), Offer.last_visited <= one_day_ago).all()
+        send_message_to_queue('process_single_offer', offers)
+        return len(offers)
 
 
 def individual_offer_scan(url):
@@ -76,7 +80,7 @@ def photos_download(offerid_link):
 def add_download_photos_to_queue(params, offer_id, foreign_id):
     images = [data for data in params if data[0] == 'image_list'][0][1]
     concat_images_with_id = [f'{offer_id},{foreign_id},{img}' for img in images]
-    send_message_to_kafka_queue('process_image', concat_images_with_id)
+    send_message_to_queue('process_image', concat_images_with_id)
 
 
 def update_dates(new_offer, existing_offer):
@@ -98,7 +102,7 @@ def create_price_history(offer):
     offer.price_history.append(price_history)
 
 
-def send_message_to_kafka_queue(queue_name, elements):
+def send_message_to_queue(queue_name, elements):
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
     channel = connection.channel()
 
