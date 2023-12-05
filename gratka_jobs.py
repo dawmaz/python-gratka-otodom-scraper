@@ -1,8 +1,10 @@
 import pika
+import requests
+import os
 
 from gratka_extractor import extract_page_number, prepare_links, extract_parameters
 from offer_parser import offer_parse_parameters
-from db_schema import create_session, Offer, JobHistory, PriceHistory
+from db_schema import create_session, Offer, JobHistory, PriceHistory, Photo
 from datetime import datetime, timedelta
 
 
@@ -38,11 +40,28 @@ def individual_offer_scan(url):
             update_dates(new_offer, existing_offer)
             create_price_history(new_offer)
             session.add(new_offer)
-            add_download_photos_to_queue(url_params, new_offer.offer_id)
+            add_download_photos_to_queue(url_params, new_offer.offer_id, new_offer.id)
 
-def add_download_photos_to_queue(params, offer_id):
+def photos_download(offerid_link):
+    offer_id, foreign_id, image_url = offerid_link.split(',')
+    response = requests.get(image_url)
+
+    if response.status_code == 200:
+        if not os.path.exists(offer_id):
+            os.makedirs(offer_id)
+
+        file_name = image_url.split('/')[-1]
+        destination = os.path.join(offer_id, file_name)
+        with open(destination, 'wb') as file:
+            file.write(response.content)
+
+        with create_session() as session:
+            photo = Photo(offer_id=int(foreign_id), path=destination, original_web_address=image_url)
+            session.add(photo)
+
+def add_download_photos_to_queue(params, offer_id, foreign_id):
     images = [data for data in params if data[0] == 'image_list'][0][1]
-    concat_images_with_id = [f'{offer_id},{img}'for img in images]
+    concat_images_with_id = [f'{offer_id},{foreign_id},{img}'for img in images]
     send_message_to_kafka_queue('process_image', concat_images_with_id)
 
 
