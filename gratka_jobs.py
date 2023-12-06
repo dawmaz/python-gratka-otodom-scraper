@@ -2,7 +2,7 @@ import pika
 import requests
 import os
 
-from gratka_extractor import extract_page_number, prepare_links, extract_parameters
+from gratka_extractor import extract_page_number, prepare_links, extract_parameters, extract_links_from_url
 from offer_parser import offer_parse_parameters
 from db_schema import create_session, Offer, PriceHistory, Photo
 from datetime import datetime, timedelta
@@ -11,15 +11,21 @@ from datetime import datetime, timedelta
 def full_scan(url):
     page_numbers = extract_page_number(url)
     links = prepare_links(url, page_numbers)
-    send_message_to_queue('process_single_offer', links)
-    return links.count()
+    all_to_check = []
+
+    for link in links:
+        all_to_check.extend(extract_links_from_url(link))
+
+    send_message_to_queue('process_single_offer', all_to_check)
+    return len(all_to_check)
 
 
 def refresh_all():
     one_day_ago = datetime.now() - timedelta(days=1)
     with create_session() as session:
         offers = session.query(Offer).filter(Offer.date_removed.is_(None), Offer.last_visited <= one_day_ago).all()
-        send_message_to_queue('process_single_offer', offers)
+        offers_addresses = [offer.website_address for offer in offers]
+        send_message_to_queue('process_single_offer', offers_addresses)
         return len(offers)
 
 
@@ -61,6 +67,7 @@ def individual_offer_scan(url):
 
 def photos_download(offerid_link):
     offer_id, foreign_id, image_url = offerid_link.split(',')
+    offer_id = 'images/' + offer_id
     response = requests.get(image_url)
 
     if response.status_code == 200:

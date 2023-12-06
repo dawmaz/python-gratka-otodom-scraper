@@ -142,7 +142,7 @@ def prepare_links(url, number):
     links = []
     separator = '&' if '?' in url else '?'
     logger.info(f'Preparing links for {url} has started')
-    for i in range(1, number + 1):
+    for i in range(1, int(number) + 1):
         links.append(f'{url}{separator}page={i}')
     logger.info(f'Preparing links for {url} has finished')
     return links

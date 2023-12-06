@@ -39,13 +39,22 @@ def offer_parse_parameters(params):
     table_columns['district'] = location_params[1].strip()
     table_columns['building_type'] = expected_params['Typ zabudowy']
     table_columns['ownership_type'] = expected_params['Forma własności']
-    table_columns['floor'] = float(expected_params['Piętro'])
-    table_columns['year_of_construction'] = int(expected_params['Rok budowy'])
-    table_columns['number_of_rooms'] = int(expected_params['Liczba pokoi'])
-    table_columns['area'] = float(expected_params['Powierzchnia w m2'][:-3].strip().replace(' ', '').replace(',', '.'))
-    table_columns['price_per_square_meter'] = float(
-        expected_params['additional_price'][:-6].replace(' ', '').replace(',', '.'))
-    table_columns['price'] = float(expected_params['price'][:-2].strip().replace(' ', '').replace(',', '.'))
+    table_columns['floor'] = expected_params['Piętro']
+    table_columns['year_of_construction'] = int(expected_params['Rok budowy']) if expected_params['Rok budowy'] else None
+    rooms = expected_params['Liczba pokoi']
+    try:
+        rooms = int(rooms)
+    except ValueError:
+        rooms = 0
+
+    table_columns['number_of_rooms'] = rooms
+    area = expected_params['Powierzchnia w m2'][:-3].strip().replace(' ', '').replace(',', '.') if expected_params['Powierzchnia w m2'] else None
+    table_columns['area'] = float(area) if area else None
+    price_per_square_meter = expected_params['additional_price'][:-6].replace(' ', '').replace(',', '.') if expected_params['additional_price'] else None
+    table_columns['price_per_square_meter'] = float(price_per_square_meter) if price_per_square_meter else None
+    price = expected_params['price'][:-2].strip().replace(' ', '').replace(',', '.') if expected_params['price'] else None
+    price = None if price=='Zapytajoce' else price
+    table_columns['price'] = float(price) if price else None
 
     return Offer(
         city=table_columns['city'],

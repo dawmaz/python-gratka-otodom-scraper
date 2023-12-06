@@ -23,7 +23,7 @@ class Offer(Base):
     price = Column(Float)
     area = Column(Float)
     price_per_square_meter = Column(Float)
-    floor = Column(Float)
+    floor = Column(String)
     number_of_rooms = Column(Integer)
     building_type = Column(String)
     ownership_type = Column(String)

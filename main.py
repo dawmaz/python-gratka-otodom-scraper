@@ -1,7 +1,9 @@
 from gratka_extractor import extract_links_from_url, extract_parameters
 from offer_parser import offer_parse_parameters
-from gratka_jobs import individual_offer_scan, photos_download, refresh_all
+from gratka_jobs import individual_offer_scan, photos_download, refresh_all, send_message_to_queue
+from cyclic_schedulers import consume_scheduled_jobs, consume_single_offer, consume_images
 import pika
+import threading
 
 
 def main():
@@ -86,5 +88,19 @@ def main6():
 def main7():
     refresh_all();
 
+def mian8():
+    send_message_to_queue('process_scheduled_jobs', ['full_scan'])
+
+def main9():
+    consume_scheduled_jobs()
+
+
 if __name__ == '__main__':
-    main7()
+    threads = []
+    for i in range(100):
+        thread = threading.Thread(target=consume_images, args=())
+        threads.append(thread)
+    for thread in threads:
+        thread.start()
+
+
