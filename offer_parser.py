@@ -41,7 +41,7 @@ def offer_parse_parameters(params):
     table_columns['ownership_type'] = expected_params['Forma własności']
     table_columns['floor'] = expected_params['Piętro']
     table_columns['year_of_construction'] = int(expected_params['Rok budowy']) if expected_params['Rok budowy'] else None
-    rooms = expected_params['Liczba pokoi']
+    rooms = expected_params['Liczba pokoi'] if expected_params['Liczba pokoi'] else 0
     try:
         rooms = int(rooms)
     except ValueError:

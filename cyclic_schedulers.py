@@ -40,7 +40,11 @@ def __submit_job_history(msg, processed_count):
 
 def process_single_offer_callback(ch, method, properties, body):
     msg = body.decode('utf-8')
-    individual_offer_scan(msg)
+    try:
+        individual_offer_scan(msg)
+    except Exception as e:
+        log_invalid_offer(msg, e)
+
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
@@ -121,11 +125,15 @@ def __should_process_job(job):
         return True
 
 
-def get_time_delta(frequency):
-    if frequency == '1D':
-        return timedelta(days=1)
-    elif frequency == '2D':
-        return timedelta(days=2)
+def get_time_delta(time_string):
+    number = int(time_string[:-1])
+    unit = time_string[-1]
+
+    unit_mapping = {'D': 'days', 'H': 'hours'}
+
+    if unit in unit_mapping:
+        time_delta_args = {unit_mapping[unit]: number}
+        return timedelta(**time_delta_args)
 
 
 def __should_update(delta, date):

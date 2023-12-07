@@ -84,6 +84,16 @@ class JobHistory(Base):
 Base.metadata.create_all(bind=engine)
 
 
+class LoggedError(Base):
+    __tablename__ = 'logged_errors'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    process_name = Column(String)
+    value = Column(String)
+    date = Column(DateTime)
+    error_message = Column(String)
+
+
 @contextmanager
 def create_session():
     session = Session

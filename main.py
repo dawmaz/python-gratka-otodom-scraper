@@ -1,9 +1,13 @@
+import datetime
+
+from db_schema import create_session, LoggedError
 from gratka_extractor import extract_links_from_url, extract_parameters
 from offer_parser import offer_parse_parameters
 from gratka_jobs import individual_offer_scan, photos_download, refresh_all, send_message_to_queue
 from cyclic_schedulers import consume_scheduled_jobs, consume_single_offer, consume_images
 import pika
 import threading
+from datetime import datetime
 
 
 def main():
@@ -89,18 +93,24 @@ def main7():
     refresh_all();
 
 def mian8():
-    send_message_to_queue('process_scheduled_jobs', ['full_scan'])
+    send_message_to_queue('process_scheduled_jobs', ['refresh_all'])
 
 def main9():
     consume_scheduled_jobs()
 
 
 if __name__ == '__main__':
-    threads = []
-    for i in range(100):
-        thread = threading.Thread(target=consume_images, args=())
-        threads.append(thread)
-    for thread in threads:
-        thread.start()
+    try:
+        raise Exception('This is sample exception')
+    except Exception as e:
+        with create_session() as session:
+            l = LoggedError(process_name="Temp", value="value", date=datetime.now(), error_message=str(e))
+            session.add(l)
+    # threads = []
+    # for i in range(20):
+    #     thread = threading.Thread(target=consume_single_offer, args=())
+    #     threads.append(thread)
+    # for thread in threads:
+    #     thread.start()
 
 
