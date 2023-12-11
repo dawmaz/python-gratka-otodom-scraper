@@ -34,20 +34,21 @@ def extract_page_number(url):
     html = response.text
 
     soup = BeautifulSoup(html, 'html.parser')
-
     # Find the div with class "pagination container"
     pagination_div = soup.find('div', class_='pagination container')
 
-    # Find the span with class "pagination__separator" within the pagination_div
-    separator_span = pagination_div.find('span', class_='pagination__separator')
+    if pagination_div:
+        # Find the span with class "pagination__separator" within the pagination_div
+        separator_span = pagination_div.find('span', class_='pagination__separator')
 
-    # Find the following anchor tag
-    page_number_anchor = separator_span.find_next('a')
+        # Find the following anchor tag
+        page_number_anchor = separator_span.find_next('a')
 
-    # Extract the page number from the anchor text
-    page_number = page_number_anchor.text.strip()
+        # Extract the page number from the anchor text
+        page_number = page_number_anchor.text.strip()
 
-    return page_number
+        return page_number
+    return 1
 
 
 def extract_parameters(url):

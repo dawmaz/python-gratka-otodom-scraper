@@ -1,7 +1,7 @@
 import time
 import pika
 
-from db_schema import create_session, ScheduledJob, JobHistory
+from db_schema import create_session, ScheduledJob, JobHistory, LoggedError
 from datetime import timedelta, datetime
 from gratka_jobs import send_message_to_queue, full_scan, refresh_all, individual_offer_scan, photos_download
 
@@ -43,14 +43,24 @@ def process_single_offer_callback(ch, method, properties, body):
     try:
         individual_offer_scan(msg)
     except Exception as e:
-        log_invalid_offer(msg, e)
+        log_error_db('process_single_offer', msg, e)
 
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
+def log_error_db(process_name, value, e):
+    with create_session() as session:
+        logged_error = LoggedError(process_name="Temp", value=value, date=datetime.now(), error_message=str(e))
+        session.add(logged_error)
+
+
 def process_images_callback(ch, method, properties, body):
     msg = body.decode('utf-8')
-    photos_download(msg)
+    try:
+        photos_download(msg)
+    except Exception as e:
+        log_error_db('process_images', msg, e)
+
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
@@ -112,8 +122,9 @@ def queue_defined_jobs():
             for job in jobs:
                 if __should_process_job(job):
                     send_message_to_queue('process_scheduled_jobs', [job.name])
-                    pass
-            time.sleep(INTERVAL)
+                    job.last_run = datetime.now()
+                    session.merge(job)
+        time.sleep(INTERVAL)
 
 
 def __should_process_job(job):

@@ -32,19 +32,19 @@ def refresh_all():
 def individual_offer_scan(url):
     with create_session() as session:
         existing_offer = session.query(Offer).filter_by(offer_id=url.split('/')[-1]).first()
-        url_params = extract_parameters(url)
-        is_removed = url_params[0] == 'Removed'
-
         # Do not process again if the site was visited in last 24h
+
         if existing_offer:
             current_time = datetime.now()
-            if is_removed:
-                existing_offer.date_removed = current_time
-                session.merge(existing_offer)
-                return
-
             time_difference = current_time - existing_offer.last_visited
-            if time_difference >= timedelta(minutes=1):
+            if time_difference >= timedelta(hours=17):
+                url_params = extract_parameters(url)
+                is_removed = url_params[0] == 'Removed'
+                if is_removed:
+                    existing_offer.date_removed = current_time
+                    session.merge(existing_offer)
+                    return
+
                 new_offer = offer_parse_parameters(url_params)
                 new_offer.website_address = url
                 new_offer.offer_id = url.split('/')[-1]
@@ -54,6 +54,8 @@ def individual_offer_scan(url):
                     create_price_history(existing_offer)
                 session.merge(existing_offer)
         else:
+            url_params = extract_parameters(url)
+            is_removed = url_params[0] == 'Removed'
             if not is_removed:
                 new_offer = offer_parse_parameters(url_params)
                 new_offer.website_address = url

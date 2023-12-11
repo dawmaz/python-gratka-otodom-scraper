@@ -1,10 +1,12 @@
 import datetime
+import time
 
 from db_schema import create_session, LoggedError
 from gratka_extractor import extract_links_from_url, extract_parameters
 from offer_parser import offer_parse_parameters
 from gratka_jobs import individual_offer_scan, photos_download, refresh_all, send_message_to_queue
-from cyclic_schedulers import consume_scheduled_jobs, consume_single_offer, consume_images
+from cyclic_schedulers import consume_scheduled_jobs, consume_single_offer, consume_images, queue_defined_jobs, \
+    get_time_delta
 import pika
 import threading
 from datetime import datetime
@@ -78,39 +80,99 @@ def callback(ch, method, properties, body):
     # Manually acknowledge the message
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
+
 def main4():
     params = extract_parameters('https://gratka.pl/nieruchomosci/mieszkanie-wroclaw-stare-miasto/ob/32607069')
     object = offer_parse_parameters(params)
     print()
 
+
 def main5():
     individual_offer_scan("https://gratka.pl/nieruchomosci/mieszkanie-wroclaw-swojczyce-ul-magellana/ob/28965805")
 
+
 def main6():
-    photos_download('32607069,4,https://d-gr.cdngr.pl/kadry/k/r/gr-ogl/fd/65/32607069_871346193_mieszkanie-wroclaw-stare-miasto_xlarge.jpg')
+    photos_download(
+        '32607069,4,https://d-gr.cdngr.pl/kadry/k/r/gr-ogl/fd/65/32607069_871346193_mieszkanie-wroclaw-stare-miasto_xlarge.jpg')
+
 
 def main7():
     refresh_all();
 
+
 def mian8():
     send_message_to_queue('process_scheduled_jobs', ['refresh_all'])
+
 
 def main9():
     consume_scheduled_jobs()
 
 
+def defined_jobs():
+    return threading.Thread(target=queue_defined_jobs, args=())
+
+
+def process_defined_jobs():
+    return threading.Thread(target=consume_scheduled_jobs, args=())
+
+
+def process_single_offer():
+    return threading.Thread(target=consume_single_offer, args=())
+
+
+def process_images():
+    return threading.Thread(target=consume_images, args=())
+
+
+def thread_orchestrator(threads):
+    while True:
+        threads_to_remove = []
+        threads_to_append = []
+        for thread in threads:
+            if not thread.is_alive():
+                new_thread = threading.Thread(target=thread._target, args=thread._args)
+                new_thread.start()
+                threads_to_remove.append(thread)
+                threads_to_append.append(new_thread)
+
+        for thread in threads_to_remove:
+            threads.remove(thread)
+
+        for thread in threads_to_append:
+            threads.append(thread)
+
+        time.sleep(60)
+
+def run_normal():
+    defined_jobs_thread = defined_jobs()
+    process_defined_jobs_thread = process_defined_jobs()
+    process_single_offer_thread = process_single_offer()
+    process_images_thread = process_images()
+
+    threads = [defined_jobs_thread, process_defined_jobs_thread, process_single_offer_thread, process_images_thread]
+
+    for thread in threads:
+        thread.start()
+
+    # Create and start the orchestrator thread after all other threads
+    orchestrator_thread = threading.Thread(target=thread_orchestrator, args=(threads,))
+    orchestrator_thread.start()
+
+
 if __name__ == '__main__':
-    try:
-        raise Exception('This is sample exception')
-    except Exception as e:
-        with create_session() as session:
-            l = LoggedError(process_name="Temp", value="value", date=datetime.now(), error_message=str(e))
-            session.add(l)
-    # threads = []
-    # for i in range(20):
-    #     thread = threading.Thread(target=consume_single_offer, args=())
-    #     threads.append(thread)
-    # for thread in threads:
-    #     thread.start()
+    threads = []
+    defined_jobs_thread = defined_jobs()
+    threads.append(defined_jobs_thread)
+    process_defined_jobs_thread = process_defined_jobs()
+    threads.append(process_defined_jobs_thread)
+    for i in range(8):
+        x = process_single_offer()
+        threads.append(x)
+        y = process_images()
+        threads.append(y)
 
+    for thread in threads:
+        thread.start()
 
+    orchestrator_thread = threading.Thread(target=thread_orchestrator, args=(threads,))
+    orchestrator_thread.start()
