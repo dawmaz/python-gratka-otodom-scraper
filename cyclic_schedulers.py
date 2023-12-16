@@ -50,7 +50,7 @@ def process_single_offer_callback(ch, method, properties, body):
 
 def log_error_db(process_name, value, e):
     with create_session() as session:
-        logged_error = LoggedError(process_name="Temp", value=value, date=datetime.now(), error_message=str(e))
+        logged_error = LoggedError(process_name=process_name, value=value, date=datetime.now(), error_message=str(e))
         session.add(logged_error)
 
 

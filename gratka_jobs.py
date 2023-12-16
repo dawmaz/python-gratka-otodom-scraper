@@ -1,11 +1,16 @@
 import pika
 import requests
 import os
+import threading
 
 from gratka_extractor import extract_page_number, prepare_links, extract_parameters, extract_links_from_url
 from offer_parser import offer_parse_parameters
 from db_schema import create_session, Offer, PriceHistory, Photo
 from datetime import datetime, timedelta
+
+
+class SharedData:
+    lock = threading.Lock()
 
 
 def full_scan(url):
@@ -73,8 +78,9 @@ def photos_download(offerid_link):
     response = requests.get(image_url)
 
     if response.status_code == 200:
-        if not os.path.exists(offer_id):
-            os.makedirs(offer_id)
+        with SharedData.lock:
+            if not os.path.exists(offer_id):
+                os.makedirs(offer_id)
 
         file_name = image_url.split('/')[-1]
         destination = os.path.join(offer_id, file_name)
