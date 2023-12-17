@@ -1,12 +1,13 @@
-import pika
-import requests
 import os
 import threading
-
-from gratka_extractor import extract_page_number, prepare_links, extract_parameters, extract_links_from_url
-from offer_parser import offer_parse_parameters
-from db_schema import create_session, Offer, PriceHistory, Photo
 from datetime import datetime, timedelta
+
+import pika
+import requests
+
+from gratka_db_schema import create_session, Offer, PriceHistory, Photo
+from gratka_extractor import extract_page_number, prepare_links, extract_parameters, extract_links_from_url
+from gratka_offer_parser import offer_parse_parameters
 
 
 class SharedData:

@@ -1,6 +1,7 @@
-import requests
-import re
 import logging
+import re
+
+import requests
 from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO)

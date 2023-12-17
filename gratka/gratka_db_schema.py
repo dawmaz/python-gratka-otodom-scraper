@@ -1,15 +1,25 @@
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine, Column, Integer, String, Float, Date,DateTime, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker, scoped_session
 
-# Replace 'your_postgres_url' with the actual connection URL for your PostgreSQL database
 DATABASE_URL = 'postgresql://postgres:02589qwert@localhost:5432/postgres'
 engine = create_engine(DATABASE_URL)
 session_factory = sessionmaker(bind=engine)
 Session = scoped_session(session_factory)
 
 Base = declarative_base()
+
+
+@contextmanager
+def create_session():
+    session = Session
+    try:
+        yield session
+        session.commit()
+    finally:
+        session.close()
+        print('Session has been closed!')
 
 
 class Offer(Base):
@@ -94,22 +104,4 @@ class LoggedError(Base):
     error_message = Column(String)
 
 
-@contextmanager
-def create_session():
-    session = Session
-    try:
-        yield session
-        session.commit()
-    finally:
-        session.close()
-        print('Session has been closed!')
 
-# Now you can use 'session' to interact with your database
-# For example, to query all offers in a specific district:
-# district = 'YourDistrict'
-# offers_in_district = session.query(Offer).filter_by(district=district).all()
-# for offer in offers_in_district:
-#     print(offer.offer_id, offer.price)
-#
-# # Don't forget to close the session when you are done
-# session.close()
