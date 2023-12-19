@@ -1,4 +1,4 @@
-from gratka_db_schema import Offer
+from .gratka_db_schema import Offer
 
 
 def offer_parse_parameters(params):

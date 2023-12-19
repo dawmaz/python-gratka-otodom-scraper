@@ -3,8 +3,8 @@ from datetime import timedelta, datetime
 
 import pika
 
-from gratka_db_schema import create_session, ScheduledJob, JobHistory, LoggedError
-from gratka_jobs import send_message_to_queue, full_scan, refresh_all, individual_offer_scan, photos_download
+from .gratka_db_schema import create_session, ScheduledJob, JobHistory, LoggedError
+from .gratka_jobs import send_message_to_queue, full_scan, refresh_all, individual_offer_scan, photos_download
 
 INTERVAL = 30
 DAILY_REFRESH_PAGE_URL = 'https://gratka.pl/nieruchomosci/mieszkania/wroclaw?data-dodania-search=ostatnich-24h'
