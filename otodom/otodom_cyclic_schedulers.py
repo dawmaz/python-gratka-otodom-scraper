@@ -80,7 +80,7 @@ def process_single_offer_callback(ch, method, properties, body):
     try:
         individual_offer_scan(msg)
     except Exception as e:
-        log_error_db('process_single_offer', msg, e)
+        log_error_db('process_single_offer_otodom', msg, e)
 
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -107,7 +107,7 @@ def process_images_callback(ch, method, properties, body):
     try:
         photos_download(msg)
     except Exception as e:
-        log_error_db('process_images', msg, e)
+        log_error_db('process_images_otodom', msg, e)
 
     ch.basic_ack(delivery_tag=method.delivery_tag)
 

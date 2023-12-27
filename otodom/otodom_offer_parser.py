@@ -74,7 +74,7 @@ def offer_parse_parameters(params):
     table_columns['security'] = expected_params['Zabezpieczenia'] if expected_params['Zabezpieczenia'] else None
     table_columns['balcony_garden_terrace'] = expected_params['Balkon / ogród / taras'] if expected_params['Balkon / ogród / taras'] else None
     table_columns['windows'] = expected_params['Okna'] if expected_params['Okna'] else None
-    table_columns['year_of_construction'] = int(expected_params['Rok budowy']) if expected_params['Rok budowy'] else None
+    table_columns['year_of_construction'] = int(expected_params['Rok budowy']) if expected_params['Rok budowy'] and 'brak' not in expected_params['Rok budowy'] else None
     table_columns['market'] = expected_params['Rynek'] if expected_params['Rynek'] else None
     rooms = expected_params['Liczba pokoi'] if expected_params['Liczba pokoi'] else 0
     try:
