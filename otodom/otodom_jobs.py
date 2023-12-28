@@ -20,13 +20,15 @@ class SharedData:
 def full_scan(url):
     page_numbers = extract_page_number(url)
     links = prepare_links(url, page_numbers)
-    all_to_check = []
+
+    length = 0
 
     for link in links:
-        all_to_check.extend(extract_links_from_url(link))
+        values = extract_links_from_url(link)
+        length += len(values)
+        send_message_to_queue('otodom_process_single_offer', values)
 
-    send_message_to_queue('otodom_process_single_offer', all_to_check)
-    return len(all_to_check)
+    return length
 
 
 def refresh_all():

@@ -1,3 +1,4 @@
+import threading
 import time
 from datetime import timedelta, datetime
 
@@ -31,7 +32,13 @@ def consume_scheduled_jobs():
 
 
 def process_scheduled_jobs_callback(ch, method, properties, body):
+    thread = threading.Thread(target=__process_scheduled_jobs_callback, args=(ch, method, body))
+    thread.start()
+
+
+def __process_scheduled_jobs_callback(ch, method, body):
     msg = body.decode('utf-8')
+    ch.basic_ack(delivery_tag=method.delivery_tag)
 
     if msg == 'daily_refresh':
         __process_job(msg, DAILY_REFRESH_PAGE_URL)
@@ -39,9 +46,6 @@ def process_scheduled_jobs_callback(ch, method, properties, body):
         __process_job(msg, FULL_SCAN_PAGE_URL)
     elif msg == 'refresh_all':
         __submit_job_history(msg, refresh_all())
-
-    # Manually acknowledge the message
-    ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def __process_job(msg, page):

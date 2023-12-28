@@ -74,7 +74,7 @@ def thread_orchestrator(threads_dict):
                 new_thread.start()
                 print(f'Thread {key} is dead. New one was created')
 
-        consumers = get_alive_consumers()
+        consumers = None#get_alive_consumers()
 
         if consumers:
             to_reborn = check_consumers_alive(consumers, 'otodom_process_scheduled_jobs', 'process_scheduled_jobs')
