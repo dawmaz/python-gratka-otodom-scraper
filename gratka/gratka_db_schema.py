@@ -19,7 +19,6 @@ def create_session():
         session.commit()
     finally:
         session.close()
-        print('Session has been closed!')
 
 
 class Offer(Base):
