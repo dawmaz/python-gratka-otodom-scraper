@@ -59,12 +59,12 @@ def thread_orchestrator(threads_dict):
                         new_thread = process_images_otodom()
                     else:
                         new_thread = process_images()
-                elif key == 'defined_jobs':
+                elif 'defined_jobs' in key:
                     if 'otodom' in key:
                         new_thread = defined_jobs_otodom()
                     else:
                         new_thread = defined_jobs()
-                elif key == 'process_defined_jobs':
+                elif 'process_defined_jobs' in key:
                     if 'otodom' in key:
                         new_thread = process_defined_jobs_otodom()
                     else:
