@@ -1,9 +1,10 @@
 import threading
 import time
+import traceback
 from datetime import timedelta, datetime
 
 import pika
-
+from urllib3.exceptions import MaxRetryError
 
 from gratka.gratka_db_schema import create_session, LoggedError
 from .otodom_db_schema import OtodomScheduledJobs, OtodomJobsHistory
@@ -14,9 +15,10 @@ DAILY_REFRESH_PAGE_URL = 'https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/do
 FULL_SCAN_PAGE_URL = 'https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/dolnoslaskie/wroclaw/wroclaw/wroclaw?viewType=listing&limit=72'
 
 
-def consume_scheduled_jobs():
+def consume_scheduled_jobs(connection_name):
     # Connection parameters
-    connection_params = pika.ConnectionParameters(host='localhost', port=5672)
+    connection_params = pika.ConnectionParameters(host='localhost', port=5672, client_properties={
+        'connection_name': f'{connection_name}'})
     # Establish connection
     connection = pika.BlockingConnection(connection_params)
     channel = connection.channel()
@@ -62,9 +64,10 @@ def __submit_job_history(msg, processed_count):
         session.merge(job)
 
 
-def consume_single_offer():
+def consume_single_offer(connection_name):
     # Connection parameters
-    connection_params = pika.ConnectionParameters(host='localhost', port=5672)
+    connection_params = pika.ConnectionParameters(host='localhost', port=5672, client_properties={
+        'connection_name': f'{connection_name}'})
     # Establish connection
     connection = pika.BlockingConnection(connection_params)
     channel = connection.channel()
@@ -83,15 +86,19 @@ def process_single_offer_callback(ch, method, properties, body):
     msg = body.decode('utf-8')
     try:
         individual_offer_scan(msg)
+    except MaxRetryError as e:
+        log_error_db('process_single_offer_otodom', msg, 'Max retry error')
     except Exception as e:
-        log_error_db('process_single_offer_otodom', msg, e)
+        stack_trace = traceback.format_exc()
+        log_error_db('process_single_offer_otodom', msg, e, stack_trace)
 
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def consume_images():
+def consume_images(connection_name):
     # Connection parameters
-    connection_params = pika.ConnectionParameters(host='localhost', port=5672)
+    connection_params = pika.ConnectionParameters(host='localhost', port=5672, client_properties={
+        'connection_name': f'{connection_name}'})
     # Establish connection
     connection = pika.BlockingConnection(connection_params)
     channel = connection.channel()
@@ -116,9 +123,12 @@ def process_images_callback(ch, method, properties, body):
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
-def log_error_db(process_name, value, e):
+def log_error_db(process_name, value, e, stack_trace=None):
     with create_session() as session:
-        logged_error = LoggedError(process_name=process_name, value=value, date=datetime.now(), error_message=str(e))
+        error_message = str(e)
+        if stack_trace:
+            error_message += '\n' + stack_trace
+        logged_error = LoggedError(process_name=process_name, value=value, date=datetime.now(), error_message=error_message)
         session.add(logged_error)
 
 

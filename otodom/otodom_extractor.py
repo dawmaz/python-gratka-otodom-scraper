@@ -3,7 +3,6 @@ import requests
 import json
 from bs4 import BeautifulSoup
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -43,7 +42,7 @@ def extract_parameters(url):
 
     parameter_list = []
 
-    if is_offer_removed(html):
+    if (len(response.history) > 0 and 'from404' in response.history[0].text) or is_offer_removed(html):
         parameter_list.append('Removed')
         return parameter_list
 
@@ -101,7 +100,8 @@ def extract_image_address(parameter_list, html):
 
 def is_offer_removed(html):
     soup = BeautifulSoup(html, 'html.parser')
-    removed_message = soup.find('div', {'data-cy': 'expired-ad-alert'})
+    removed_message = soup.find('div', {'data-cy': 'expired-ad-alert'}) or soup.find('div', {
+        'data-cy': 'redirectedFromInactiveAd'})
     return removed_message is not None
 
 
@@ -113,10 +113,3 @@ def prepare_links(url, number):
         links.append(f'{url}{separator}page={i}')
     logger.info(f'Preparing links for {url} has finished')
     return links
-
-
-
-
-
-
-
