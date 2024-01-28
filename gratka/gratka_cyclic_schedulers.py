@@ -14,7 +14,7 @@ FULL_SCAN_PAGE_URL = 'https://gratka.pl/nieruchomosci/mieszkania/wroclaw'
 
 def consume_scheduled_jobs(connection_name):
     # Connection parameters
-    connection_params = pika.ConnectionParameters(host='localhost', port=5672, client_properties={
+    connection_params = pika.ConnectionParameters(host='rabbit-mq', port=5672, client_properties={
         'connection_name': f'{connection_name}'})
     # Establish connection
     connection = pika.BlockingConnection(connection_params)
@@ -63,7 +63,7 @@ def __submit_job_history(msg, processed_count):
 
 def consume_single_offer(connection_name):
     # Connection parameters
-    connection_params = pika.ConnectionParameters(host='localhost', port=5672, client_properties={
+    connection_params = pika.ConnectionParameters(host='rabbit-mq', port=5672, client_properties={
         'connection_name': f'{connection_name}'})
     # Establish connection
     connection = pika.BlockingConnection(connection_params)
@@ -91,7 +91,7 @@ def process_single_offer_callback(ch, method, properties, body):
 
 def consume_images(connection_name):
     # Connection parameters
-    connection_params = pika.ConnectionParameters(host='localhost', port=5672, client_properties={
+    connection_params = pika.ConnectionParameters(host='rabbit-mq', port=5672, client_properties={
         'connection_name': f'{connection_name}'})
     # Establish connection
     connection = pika.BlockingConnection(connection_params)

@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker, scoped_session
 
-DATABASE_URL = 'postgresql://postgres:02589qwert;!/A@localhost:5432/postgres'
+DATABASE_URL = 'postgresql://postgres:02589qwert;!/A@postgres-db:5432/postgres'
 engine = create_engine(DATABASE_URL)
 session_factory = sessionmaker(bind=engine)
 Session = scoped_session(session_factory)
