@@ -1,0 +1,9 @@
+images
+images_otodom
+.git
+.gitignore
+.idea
+venv
+.DS_Store
+Dockerfile
+.dockerignore

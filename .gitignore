@@ -6,4 +6,5 @@
 
 # Exclude images/ directory
 images/
-otodom/images_otodom
+images_otodom/
+
