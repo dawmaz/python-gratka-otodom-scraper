@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__+'GRATKA_APP')
 
 
 def extract_links_from_url(url):

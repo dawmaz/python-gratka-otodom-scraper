@@ -1,6 +1,7 @@
 import threading
 import time
 import traceback
+import logging
 from datetime import timedelta, datetime
 
 import pika
@@ -14,7 +15,8 @@ INTERVAL = 30
 DAILY_REFRESH_PAGE_URL = 'https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/dolnoslaskie/wroclaw/wroclaw/wroclaw?daysSinceCreated=1&limit=72&viewType=listing'
 FULL_SCAN_PAGE_URL = 'https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/dolnoslaskie/wroclaw/wroclaw/wroclaw?viewType=listing&limit=72'
 
-
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__+'GRATKA_APP')
 def consume_scheduled_jobs(connection_name):
     # Connection parameters
     connection_params = pika.ConnectionParameters(host='rabbit-mq', port=5672, client_properties={
@@ -40,7 +42,8 @@ def process_scheduled_jobs_callback(ch, method, properties, body):
 
 def __process_scheduled_jobs_callback(ch, method, body):
     msg = body.decode('utf-8')
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+
+    logger.info(f'Received message : {msg} from otodom. Proper process will be started')
 
     if msg == 'daily_refresh':
         __process_job(msg, DAILY_REFRESH_PAGE_URL)
@@ -49,9 +52,12 @@ def __process_scheduled_jobs_callback(ch, method, body):
     elif msg == 'refresh_all':
         __submit_job_history(msg, refresh_all())
 
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 def __process_job(msg, page):
     processed_count = full_scan(page)
+    logger.info(f'Job {msg} for otodom processed with count {processed_count}')
     __submit_job_history(msg, processed_count)
 
 
@@ -85,14 +91,17 @@ def consume_single_offer(connection_name):
 def process_single_offer_callback(ch, method, properties, body):
     msg = body.decode('utf-8')
     try:
+        logger.info(f'Process single offer callback received with message: {msg}')
         individual_offer_scan(msg)
+        ch.basic_ack(delivery_tag=method.delivery_tag)
     except MaxRetryError as e:
         log_error_db('process_single_offer_otodom', msg, 'Max retry error')
     except Exception as e:
         stack_trace = traceback.format_exc()
         log_error_db('process_single_offer_otodom', msg, e, stack_trace)
+        logger.error(f'Individual offer scan failed for message {msg} with error: {e}')
 
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 
 def consume_images(connection_name):
@@ -116,11 +125,12 @@ def consume_images(connection_name):
 def process_images_callback(ch, method, properties, body):
     msg = body.decode('utf-8')
     try:
+        logger.info(f'Process image callback for otodom received with message: {msg}')
         photos_download(msg)
+        ch.basic_ack(delivery_tag=method.delivery_tag)
     except Exception as e:
         log_error_db('process_images_otodom', msg, e)
-
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+        logger.info(f'Image process failed for message {msg} with error: {e}')
 
 
 def log_error_db(process_name, value, e, stack_trace=None):

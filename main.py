@@ -10,7 +10,7 @@ from otodom.otodom_extractor import extract_parameters
 from otodom.otodom_jobs import individual_offer_scan
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__+'GRATKA_APP')
 
 def defined_jobs():
     return threading.Thread(target=queue_defined_jobs, args=())
