@@ -120,7 +120,7 @@ def create_price_history(offer):
 
 
 def send_message_to_queue(queue_name, elements):
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    connection = pika.BlockingConnection(pika.ConnectionParameters('rabbit-mq'))
     channel = connection.channel()
 
     channel.queue_declare(queue=queue_name)

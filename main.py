@@ -1,3 +1,4 @@
+import logging
 import threading
 import time
 import requests
@@ -8,6 +9,8 @@ from otodom import otodom_cyclic_schedulers
 from otodom.otodom_extractor import extract_parameters
 from otodom.otodom_jobs import individual_offer_scan
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def defined_jobs():
     return threading.Thread(target=queue_defined_jobs, args=())
@@ -88,20 +91,20 @@ def thread_orchestrator(threads_dict):
 
             active_threads = [thread for thread in threading.enumerate() if not thread.daemon]
 
-            print(f'Active non deamon threads: {len(active_threads)}')
+            logger.info(f'Active non deamon threads: {len(active_threads)}')
         except Exception as e:
             log_error_db('main_thread', 'exception', e)
 
 
 def get_alive_connections():
-    api_url = f'http://localhost:15672/api/connections'
+    api_url = f'http://rabbit-mq:15672/api/connections'
     response = requests.get(api_url, auth=('guest', 'guest'))
 
     if response.status_code == 200:
         connections = response.json()
         return connections
     else:
-        print(f"Failed to retrieve consumers. Status code: {response.status_code}")
+        logger.info(f"Failed to retrieve consumers. Status code: {response.status_code}")
         return None
 
 
@@ -134,7 +137,7 @@ def reborn_threads(threads_dict, to_reborn):
             old_thread.join(1)
         threads_dict[name] = new_thread
         new_thread.start()
-        print(f'Thread {name} is dead. New one was reborn')
+        logger.info(f'Thread {name} is dead. New one was reborn')
 
 
 def run_extra_threads():

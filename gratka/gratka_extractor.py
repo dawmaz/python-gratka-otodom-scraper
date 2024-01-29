@@ -134,7 +134,7 @@ def extract_images_from_script(html_parsed):
 
     except Exception as e:
         # Handle exceptions here, you can print an error message or log the exception
-        print(f"An error occurred: {e}")
+        logger.info(f"An error occurred: {e}")
         image_urls = []  # You might want to set image_urls to an empty list or handle it based on your requirements
     logger.info(f'Extract images has finished')
     return image_urls
