@@ -10,15 +10,20 @@ PREFIX_URL = "https://www.otodom.pl"
 
 
 def extract_page_number(url):
-    response = requests.get(url)
+
+    headers = {
+        'User-Agent': 'PostmanRuntime/7.36.3',
+        'Cookie': 'lang=pl'}
+
+    response = requests.get(url, headers=headers)
     html = response.text
 
     soup = BeautifulSoup(html, 'html.parser')
-    buttons = soup.select('nav[data-cy="pagination"] button[data-cy^="pagination.go-to-page-"]')
+    buttons = soup.select('ul[data-testid="frontend.search.base-pagination.nexus-pagination"] li')
 
     # Check if there are at least two buttons
     if buttons:
-        second_to_last_button = buttons[-1]
+        second_to_last_button = buttons[-2]
         value = second_to_last_button.text.strip()
         return int(value)
     else:
@@ -26,7 +31,12 @@ def extract_page_number(url):
 
 
 def extract_links_from_url(url):
-    response = requests.get(url)
+
+    headers = {
+        'User-Agent': 'PostmanRuntime/7.36.3',
+        'Cookie': 'lang=pl'}
+
+    response = requests.get(url, headers=headers)
     html = response.text
 
     soup = BeautifulSoup(html, 'html.parser')
@@ -37,7 +47,11 @@ def extract_links_from_url(url):
 
 
 def extract_parameters(url):
-    response = requests.get(url)
+    headers = {
+        'User-Agent': 'PostmanRuntime/7.36.3',
+        'Cookie': 'lang=pl'}
+
+    response = requests.get(url, headers=headers)
     html = response.text
 
     parameter_list = []
