@@ -40,6 +40,7 @@ def process_scheduled_jobs_callback(ch, method, properties, body):
 
 
 def __process_scheduled_jobs_callback(ch, method, body):
+    ch.basic_ack(delivery_tag=method.delivery_tag)
     msg = body.decode('utf-8')
     logger.info(f'Received message : {msg}. Proper process will be started')
 
@@ -50,7 +51,7 @@ def __process_scheduled_jobs_callback(ch, method, body):
     elif msg == 'refresh_all':
         __submit_job_history(msg, refresh_all())
 
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 
 def __process_job(msg, page):
@@ -89,9 +90,9 @@ def consume_single_offer(connection_name):
 def process_single_offer_callback(ch, method, properties, body):
     msg = body.decode('utf-8')
     try:
+        ch.basic_ack(delivery_tag=method.delivery_tag)
         logger.info(f'Process single offer callback received with message: {msg}')
         individual_offer_scan(msg)
-        ch.basic_ack(delivery_tag=method.delivery_tag)
     except Exception as e:
         logger.error(f'Individual offer scan failed for message {msg} with error: {e}')
         log_error_db('process_single_offer', msg, e)
@@ -120,9 +121,9 @@ def consume_images(connection_name):
 def process_images_callback(ch, method, properties, body):
     msg = body.decode('utf-8')
     try:
+        ch.basic_ack(delivery_tag=method.delivery_tag)
         logger.info(f'Process image callback received with message: {msg}')
         photos_download(msg)
-        ch.basic_ack(delivery_tag=method.delivery_tag)
     except Exception as e:
         log_error_db('process_images', msg, e)
         logger.info(f'Image process failed for message {msg} with error: {e}')

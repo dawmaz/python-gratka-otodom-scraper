@@ -42,7 +42,7 @@ def process_scheduled_jobs_callback(ch, method, properties, body):
 
 def __process_scheduled_jobs_callback(ch, method, body):
     msg = body.decode('utf-8')
-
+    ch.basic_ack(delivery_tag=method.delivery_tag)
     logger.info(f'Received message : {msg} from otodom. Proper process will be started')
 
     if msg == 'daily_refresh':
@@ -52,7 +52,7 @@ def __process_scheduled_jobs_callback(ch, method, body):
     elif msg == 'refresh_all':
         __submit_job_history(msg, refresh_all())
 
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 
 def __process_job(msg, page):
@@ -91,9 +91,10 @@ def consume_single_offer(connection_name):
 def process_single_offer_callback(ch, method, properties, body):
     msg = body.decode('utf-8')
     try:
+        ch.basic_ack(delivery_tag=method.delivery_tag)
         logger.info(f'Process single offer callback received with message: {msg}')
         individual_offer_scan(msg)
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+
     except MaxRetryError as e:
         log_error_db('process_single_offer_otodom', msg, 'Max retry error')
     except Exception as e:
@@ -125,9 +126,9 @@ def consume_images(connection_name):
 def process_images_callback(ch, method, properties, body):
     msg = body.decode('utf-8')
     try:
+        ch.basic_ack(delivery_tag=method.delivery_tag)
         logger.info(f'Process image callback for otodom received with message: {msg}')
         photos_download(msg)
-        ch.basic_ack(delivery_tag=method.delivery_tag)
     except Exception as e:
         log_error_db('process_images_otodom', msg, e)
         logger.info(f'Image process failed for message {msg} with error: {e}')
